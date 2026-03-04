@@ -26,14 +26,19 @@ export class ProcessingHelper {
     
     if (useOllama) {
       console.log("[ProcessingHelper] Initializing with Ollama")
-      this.llmHelper = new LLMHelper(undefined, true, ollamaModel, ollamaUrl)
+      this.llmHelper = new LLMHelper(undefined, true, ollamaModel, ollamaUrl, "gemini")
     } else {
-      const apiKey = process.env.GEMINI_API_KEY
-      if (!apiKey) {
-        throw new Error("GEMINI_API_KEY not found in environment variables. Set GEMINI_API_KEY or enable Ollama with USE_OLLAMA=true")
+      const openaiKey = process.env.OPENAI_API_KEY
+      const geminiKey = process.env.GEMINI_API_KEY
+      if (openaiKey) {
+        console.log("[ProcessingHelper] Initializing with OpenAI")
+        this.llmHelper = new LLMHelper(openaiKey, false, undefined, undefined, "openai")
+      } else if (geminiKey) {
+        console.log("[ProcessingHelper] Initializing with Gemini")
+        this.llmHelper = new LLMHelper(geminiKey, false, undefined, undefined, "gemini")
+      } else {
+        throw new Error("Set OPENAI_API_KEY or GEMINI_API_KEY in environment, or enable Ollama with USE_OLLAMA=true")
       }
-      console.log("[ProcessingHelper] Initializing with Gemini")
-      this.llmHelper = new LLMHelper(apiKey, false)
     }
   }
 

@@ -186,6 +186,17 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   });
 
+  ipcMain.handle("switch-to-openai", async (_, apiKey?: string, model?: string) => {
+    try {
+      const llmHelper = appState.processingHelper.getLLMHelper();
+      await llmHelper.switchToOpenAI(apiKey, model);
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error switching to OpenAI:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle("test-llm-connection", async () => {
     try {
       const llmHelper = appState.processingHelper.getLLMHelper();

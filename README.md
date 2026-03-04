@@ -11,8 +11,7 @@ If you’re looking for a hosted desktop recording API, consider checking out [R
 ### Prerequisites
 - Make sure you have Node.js installed on your computer
 - Git installed on your computer  
-- **Either** a Gemini API key (get it from [Google AI Studio](https://makersuite.google.com/app/apikey))
-- **Or** Ollama installed locally for private LLM usage (recommended for privacy)
+- **Either** a Gemini API key ([Google AI Studio](https://makersuite.google.com/app/apikey)), **or** an OpenAI API key ([OpenAI](https://platform.openai.com/api-keys)), **or** Ollama installed locally (recommended for privacy)
 
 ### Installation Steps
 
@@ -38,6 +37,11 @@ npm install
    **For Gemini (Cloud AI):**
    ```env
    GEMINI_API_KEY=your_api_key_here
+   ```
+
+   **For OpenAI (Cloud AI):**
+   ```env
+   OPENAI_API_KEY=sk-your_api_key_here
    ```
    
    **For Ollama (Local/Private AI):**
@@ -85,12 +89,22 @@ The built app will be in the `release` folder.
 ### Google Gemini
 **Pros:**
 - Latest AI technology
-- Fastest responses
-- Best accuracy for complex tasks
+- Fast responses
+- Good accuracy for complex tasks
 
 **Cons:**
 - Requires API key and internet
 - Data sent to Google servers
+- Usage costs apply
+
+### OpenAI (GPT-4o / Whisper)
+**Pros:**
+- GPT-4o for text and vision, Whisper for audio
+- High quality and widely used API
+
+**Cons:**
+- Requires API key and internet
+- Data sent to OpenAI servers
 - Usage costs apply
 
 ### ⚠️ Important Notes

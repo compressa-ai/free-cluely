@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
+type Provider = "ollama" | "gemini" | "openai"
+
 interface ModelConfig {
-  provider: "ollama" | "gemini";
+  provider: Provider;
   model: string;
   isOllama: boolean;
 }
 
 interface ModelSelectorProps {
-  onModelChange?: (provider: "ollama" | "gemini", model: string) => void;
+  onModelChange?: (provider: Provider, model: string) => void;
   onChatOpen?: () => void;
 }
 
@@ -18,7 +20,9 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
   const [connectionStatus, setConnectionStatus] = useState<'testing' | 'success' | 'error' | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [geminiApiKey, setGeminiApiKey] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<"ollama" | "gemini">("gemini");
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [openaiModel, setOpenaiModel] = useState('gpt-4o');
+  const [selectedProvider, setSelectedProvider] = useState<Provider>("gemini");
   const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>("");
   const [ollamaUrl, setOllamaUrl] = useState<string>("http://localhost:11434");
 
@@ -77,21 +81,19 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
     try {
       setConnectionStatus('testing');
       let result;
-      
       if (selectedProvider === 'ollama') {
         result = await window.electronAPI.switchToOllama(selectedOllamaModel, ollamaUrl);
+      } else if (selectedProvider === 'openai') {
+        result = await window.electronAPI.switchToOpenAI(openaiApiKey || undefined, openaiModel || undefined);
       } else {
         result = await window.electronAPI.switchToGemini(geminiApiKey || undefined);
       }
-
       if (result.success) {
         await loadCurrentConfig();
         setConnectionStatus('success');
-        onModelChange?.(selectedProvider, selectedProvider === 'ollama' ? selectedOllamaModel : 'gemini-2.0-flash');
-        // Auto-open chat window after successful model change
-        setTimeout(() => {
-          onChatOpen?.();
-        }, 500);
+        const modelName = selectedProvider === 'ollama' ? selectedOllamaModel : selectedProvider === 'openai' ? openaiModel : 'gemini-2.0-flash';
+        onModelChange?.(selectedProvider, modelName);
+        setTimeout(() => onChatOpen?.(), 500);
       } else {
         setConnectionStatus('error');
         setErrorMessage(result.error || 'Switch failed');
@@ -147,26 +149,30 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
       {/* Provider Selection */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-gray-700">Provider</label>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedProvider('gemini')}
-            className={`flex-1 px-3 py-2 rounded text-xs transition-all ${
-              selectedProvider === 'gemini'
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'bg-white/40 text-gray-700 hover:bg-white/60'
+            className={`flex-1 min-w-0 px-2 py-2 rounded text-xs transition-all ${
+              selectedProvider === 'gemini' ? 'bg-blue-500 text-white shadow-md' : 'bg-white/40 text-gray-700 hover:bg-white/60'
             }`}
           >
-            ☁️ Gemini (Cloud)
+            ☁️ Gemini
+          </button>
+          <button
+            onClick={() => setSelectedProvider('openai')}
+            className={`flex-1 min-w-0 px-2 py-2 rounded text-xs transition-all ${
+              selectedProvider === 'openai' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white/40 text-gray-700 hover:bg-white/60'
+            }`}
+          >
+            ☁️ OpenAI
           </button>
           <button
             onClick={() => setSelectedProvider('ollama')}
-            className={`flex-1 px-3 py-2 rounded text-xs transition-all ${
-              selectedProvider === 'ollama'
-                ? 'bg-green-500 text-white shadow-md'
-                : 'bg-white/40 text-gray-700 hover:bg-white/60'
+            className={`flex-1 min-w-0 px-2 py-2 rounded text-xs transition-all ${
+              selectedProvider === 'ollama' ? 'bg-green-500 text-white shadow-md' : 'bg-white/40 text-gray-700 hover:bg-white/60'
             }`}
           >
-            🏠 Ollama (Local)
+            🏠 Ollama
           </button>
         </div>
       </div>
@@ -182,6 +188,27 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
             onChange={(e) => setGeminiApiKey(e.target.value)}
             className="w-full px-3 py-2 text-xs bg-white/40 border border-white/60 rounded focus:outline-none focus:ring-2 focus:ring-blue-400/60"
           />
+        </div>
+      ) : selectedProvider === 'openai' ? (
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-gray-700">OpenAI API Key (optional if already set)</label>
+          <input
+            type="password"
+            placeholder="sk-..."
+            value={openaiApiKey}
+            onChange={(e) => setOpenaiApiKey(e.target.value)}
+            className="w-full px-3 py-2 text-xs bg-white/40 border border-white/60 rounded focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+          />
+          <label className="text-xs font-medium text-gray-700">Model</label>
+          <select
+            value={openaiModel}
+            onChange={(e) => setOpenaiModel(e.target.value)}
+            className="w-full px-3 py-2 text-xs bg-white/40 border border-white/60 rounded focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+          >
+            <option value="gpt-4o">gpt-4o</option>
+            <option value="gpt-4o-mini">gpt-4o-mini</option>
+            <option value="gpt-4-turbo">gpt-4-turbo</option>
+          </select>
         </div>
       ) : (
         <div className="space-y-2">
@@ -249,8 +276,9 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
 
       {/* Help text */}
       <div className="text-xs text-gray-600 space-y-1">
-        <div>💡 <strong>Gemini:</strong> Fast, cloud-based, requires API key</div>
-        <div>💡 <strong>Ollama:</strong> Private, local, requires Ollama installation</div>
+        <div>💡 <strong>Gemini:</strong> Google cloud, requires API key</div>
+        <div>💡 <strong>OpenAI:</strong> GPT-4o / Whisper, requires API key</div>
+        <div>💡 <strong>Ollama:</strong> Private, local, requires Ollama</div>
       </div>
     </div>
   );

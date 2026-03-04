@@ -91,6 +91,7 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     setChatMessages((msgs) => [...msgs, { role: "user", text: chatInput }])
     setChatLoading(true)
     setChatInput("")
+    // TODO: Add support for other LLM providers
     try {
       const response = await window.electronAPI.invoke("gemini-chat", chatInput)
       setChatMessages((msgs) => [...msgs, { role: "gemini", text: response }])
@@ -203,10 +204,10 @@ const Queue: React.FC<QueueProps> = ({ setView }) => {
     setIsSettingsOpen(!isSettingsOpen)
   }
 
-  const handleModelChange = (provider: "ollama" | "gemini", model: string) => {
+  const handleModelChange = (provider: "ollama" | "gemini" | "openai", model: string) => {
     setCurrentModel({ provider, model })
     // Update chat messages to reflect the model change
-    const modelName = provider === "ollama" ? model : "Gemini 3 Pro"
+    const modelName = provider === "ollama" ? model : provider === "gemini" ? "Gemini 3 Pro" : "GPT-4o"
     setChatMessages((msgs) => [...msgs, { 
       role: "gemini", 
       text: `🔄 Switched to ${provider === "ollama" ? "🏠" : "☁️"} ${modelName}. Ready for your questions!` 
