@@ -107,6 +107,9 @@ The built app will be in the `release` folder.
 - Data sent to OpenAI servers
 - Usage costs apply
 
+### Custom system prompt
+In the in-app settings panel (gear icon), open **System prompt** to replace the default assistant instructions. The text is saved under your user data folder and applies to chat, image/audio analysis, and solution generation. Use **Save prompt** to persist, **Fill default text** to paste the built-in prompt into the editor, or **Reset to default & clear saved** to remove your custom prompt from disk.
+
 ### ⚠️ Important Notes
 
 1. **Closing the App**: 

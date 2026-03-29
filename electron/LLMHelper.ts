@@ -5,6 +5,8 @@ import os from "os"
 
 export type CloudProvider = "gemini" | "openai"
 
+export const DEFAULT_SYSTEM_PROMPT = `You are Wingman AI, a helpful, proactive assistant for any kind of problem or situation (not just coding). For any user input, analyze the situation, provide a clear problem statement, relevant context, and suggest several possible responses or actions the user could take next. Always explain your reasoning. Present your suggestions as a list of options or next steps.`
+
 interface OllamaResponse {
   response: string
   done: boolean
@@ -15,7 +17,7 @@ export class LLMHelper {
   private openaiClient: OpenAI | null = null
   private openaiModel: string = "gpt-4o"
   private cloudProvider: CloudProvider = "gemini"
-  private readonly systemPrompt = `You are Wingman AI, a helpful, proactive assistant for any kind of problem or situation (not just coding). For any user input, analyze the situation, provide a clear problem statement, relevant context, and suggest several possible responses or actions the user could take next. Always explain your reasoning. Present your suggestions as a list of options or next steps.`
+  private systemPrompt: string = DEFAULT_SYSTEM_PROMPT
   private useOllama: boolean = false
   private ollamaModel: string = "llama3.2"
   private ollamaUrl: string = "http://localhost:11434"
@@ -327,10 +329,35 @@ export class LLMHelper {
     }
   }
 
+  public getSystemPrompt(): string {
+    return this.systemPrompt
+  }
+
+  public setSystemPrompt(text: string): void {
+    const t = text.trim()
+    this.systemPrompt = t.length > 0 ? t : DEFAULT_SYSTEM_PROMPT
+  }
+
+  public resetSystemPromptToDefault(): void {
+    this.systemPrompt = DEFAULT_SYSTEM_PROMPT
+  }
+
+  public isDefaultSystemPrompt(): boolean {
+    return this.systemPrompt === DEFAULT_SYSTEM_PROMPT
+  }
+
   public async chatWithGemini(message: string): Promise<string> {
     try {
-      if (this.useOllama) return this.callOllama(message)
-      return this.callCloud(message)
+      if (this.useOllama) return this.callOllama(`${this.systemPrompt}\n\n${message}`)
+      if (this.cloudProvider === "openai" && this.openaiClient) {
+        return this.callOpenAI([{ role: "user", content: message }])
+      }
+      if (this.model) {
+        const result = await this.model.generateContent(`${this.systemPrompt}\n\n${message}`)
+        const response = await result.response
+        return response.text()
+      }
+      throw new Error("No LLM provider configured")
     } catch (error) {
       console.error("[LLMHelper] Error in chat:", error)
       throw error

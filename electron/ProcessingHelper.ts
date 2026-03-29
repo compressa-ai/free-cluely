@@ -2,6 +2,7 @@
 
 import { AppState } from "./main"
 import { LLMHelper } from "./LLMHelper"
+import { loadPersistedSystemPrompt, persistSystemPrompt } from "./userSettings"
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -39,6 +40,27 @@ export class ProcessingHelper {
       } else {
         throw new Error("Set OPENAI_API_KEY or GEMINI_API_KEY in environment, or enable Ollama with USE_OLLAMA=true")
       }
+    }
+    const savedPrompt = loadPersistedSystemPrompt()
+    if (savedPrompt?.trim()) this.llmHelper.setSystemPrompt(savedPrompt.trim())
+  }
+
+  public getSystemPrompt(): string {
+    return this.llmHelper.getSystemPrompt()
+  }
+
+  public isDefaultSystemPrompt(): boolean {
+    return this.llmHelper.isDefaultSystemPrompt()
+  }
+
+  public setSystemPromptAndPersist(text: string): void {
+    const trimmed = text.trim()
+    if (trimmed === "") {
+      this.llmHelper.resetSystemPromptToDefault()
+      persistSystemPrompt(null)
+    } else {
+      this.llmHelper.setSystemPrompt(trimmed)
+      persistSystemPrompt(trimmed)
     }
   }
 

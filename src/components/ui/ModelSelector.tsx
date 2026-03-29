@@ -25,6 +25,10 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
   const [selectedProvider, setSelectedProvider] = useState<Provider>("gemini");
   const [selectedOllamaModel, setSelectedOllamaModel] = useState<string>("");
   const [ollamaUrl, setOllamaUrl] = useState<string>("http://localhost:11434");
+  const [systemPromptDraft, setSystemPromptDraft] = useState('');
+  const [defaultSystemPrompt, setDefaultSystemPrompt] = useState('');
+  const [promptSaveStatus, setPromptSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [promptSaveError, setPromptSaveError] = useState('');
 
   useEffect(() => {
     loadCurrentConfig();
@@ -33,10 +37,15 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
   const loadCurrentConfig = async () => {
     try {
       setIsLoading(true);
-      const config = await window.electronAPI.getCurrentLlmConfig();
+      const [config, promptData] = await Promise.all([
+        window.electronAPI.getCurrentLlmConfig(),
+        window.electronAPI.getSystemPrompt(),
+      ]);
       setCurrentConfig(config);
       setSelectedProvider(config.provider);
-      
+      setSystemPromptDraft(promptData.prompt);
+      setDefaultSystemPrompt(promptData.defaultPrompt);
+
       if (config.isOllama) {
         setSelectedOllamaModel(config.model);
         await loadOllamaModels();
@@ -60,6 +69,46 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
     } catch (error) {
       console.error('Error loading Ollama models:', error);
       setAvailableOllamaModels([]);
+    }
+  };
+
+  const handleSaveSystemPrompt = async () => {
+    try {
+      setPromptSaveStatus('saving');
+      setPromptSaveError('');
+      const result = await window.electronAPI.setSystemPrompt(systemPromptDraft);
+      if (result.success) {
+        setPromptSaveStatus('saved');
+        setTimeout(() => setPromptSaveStatus('idle'), 2000);
+      } else {
+        setPromptSaveStatus('error');
+        setPromptSaveError(result.error || 'Save failed');
+      }
+    } catch (e) {
+      setPromptSaveStatus('error');
+      setPromptSaveError(String(e));
+    }
+  };
+
+  const handleResetSystemPrompt = () => {
+    setSystemPromptDraft(defaultSystemPrompt);
+  };
+
+  const handleClearStoredPrompt = async () => {
+    try {
+      setPromptSaveStatus('saving');
+      const result = await window.electronAPI.setSystemPrompt('');
+      if (result.success) {
+        setSystemPromptDraft(defaultSystemPrompt);
+        setPromptSaveStatus('saved');
+        setTimeout(() => setPromptSaveStatus('idle'), 2000);
+      } else {
+        setPromptSaveStatus('error');
+        setPromptSaveError(result.error || 'Reset failed');
+      }
+    } catch (e) {
+      setPromptSaveStatus('error');
+      setPromptSaveError(String(e));
     }
   };
 
@@ -272,6 +321,51 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
         >
           Test
         </button>
+      </div>
+
+      <div className="border-t border-white/30 pt-4 space-y-2">
+        <h4 className="text-xs font-semibold text-gray-800">System prompt</h4>
+        <p className="text-xs text-gray-600">
+          Replaces the built-in assistant instructions for chat, screenshots, audio, and solutions.
+        </p>
+        <textarea
+          value={systemPromptDraft}
+          onChange={(e) => setSystemPromptDraft(e.target.value)}
+          rows={5}
+          className="w-full px-3 py-2 text-xs bg-white/50 border border-white/60 rounded focus:outline-none focus:ring-2 focus:ring-violet-400/60 resize-y min-h-[5rem] font-mono"
+          spellCheck={false}
+        />
+        <div className="flex flex-wrap gap-2 items-center">
+          <button
+            type="button"
+            onClick={handleSaveSystemPrompt}
+            disabled={promptSaveStatus === 'saving'}
+            className="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 text-white text-xs rounded shadow-md"
+          >
+            {promptSaveStatus === 'saving' ? 'Saving…' : 'Save prompt'}
+          </button>
+          <button
+            type="button"
+            onClick={handleResetSystemPrompt}
+            className="px-3 py-1.5 bg-white/50 hover:bg-white/70 text-gray-800 text-xs rounded border border-white/60"
+          >
+            Fill default text
+          </button>
+          <button
+            type="button"
+            onClick={handleClearStoredPrompt}
+            disabled={promptSaveStatus === 'saving'}
+            className="px-3 py-1.5 bg-white/50 hover:bg-white/70 text-gray-800 text-xs rounded border border-white/60"
+          >
+            Reset to default &amp; clear saved
+          </button>
+          {promptSaveStatus === 'saved' && (
+            <span className="text-xs text-green-600">Saved</span>
+          )}
+          {promptSaveStatus === 'error' && (
+            <span className="text-xs text-red-600">{promptSaveError}</span>
+          )}
+        </div>
       </div>
 
       {/* Help text */}

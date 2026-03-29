@@ -2,6 +2,7 @@
 
 import { ipcMain, app } from "electron"
 import { AppState } from "./main"
+import { DEFAULT_SYSTEM_PROMPT } from "./LLMHelper"
 
 export function initializeIpcHandlers(appState: AppState): void {
   ipcMain.handle(
@@ -204,6 +205,30 @@ export function initializeIpcHandlers(appState: AppState): void {
       return result;
     } catch (error: any) {
       console.error("Error testing LLM connection:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("get-system-prompt", async () => {
+    try {
+      const prompt = appState.processingHelper.getSystemPrompt();
+      return {
+        prompt,
+        isDefault: appState.processingHelper.isDefaultSystemPrompt(),
+        defaultPrompt: DEFAULT_SYSTEM_PROMPT,
+      };
+    } catch (error: any) {
+      console.error("Error getting system prompt:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle("set-system-prompt", async (_, text: string) => {
+    try {
+      appState.processingHelper.setSystemPromptAndPersist(text ?? "");
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error setting system prompt:", error);
       return { success: false, error: error.message };
     }
   });

@@ -56,6 +56,8 @@ declare global {
       switchToGemini: (apiKey?: string) => Promise<{ success: boolean; error?: string }>
       switchToOpenAI: (apiKey?: string, model?: string) => Promise<{ success: boolean; error?: string }>
       testLlmConnection: () => Promise<{ success: boolean; error?: string }>
+      getSystemPrompt: () => Promise<{ prompt: string; isDefault: boolean; defaultPrompt: string }>
+      setSystemPrompt: (text: string) => Promise<{ success: boolean; error?: string }>
       
       invoke: (channel: string, ...args: any[]) => Promise<any>
     }

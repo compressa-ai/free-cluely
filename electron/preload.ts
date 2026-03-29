@@ -42,6 +42,8 @@ interface ElectronAPI {
   switchToGemini: (apiKey?: string) => Promise<{ success: boolean; error?: string }>
   switchToOpenAI: (apiKey?: string, model?: string) => Promise<{ success: boolean; error?: string }>
   testLlmConnection: () => Promise<{ success: boolean; error?: string }>
+  getSystemPrompt: () => Promise<{ prompt: string; isDefault: boolean; defaultPrompt: string }>
+  setSystemPrompt: (text: string) => Promise<{ success: boolean; error?: string }>
   
   invoke: (channel: string, ...args: any[]) => Promise<any>
 }
@@ -188,6 +190,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   switchToGemini: (apiKey?: string) => ipcRenderer.invoke("switch-to-gemini", apiKey),
   switchToOpenAI: (apiKey?: string, model?: string) => ipcRenderer.invoke("switch-to-openai", apiKey, model),
   testLlmConnection: () => ipcRenderer.invoke("test-llm-connection"),
+  getSystemPrompt: () => ipcRenderer.invoke("get-system-prompt"),
+  setSystemPrompt: (text: string) => ipcRenderer.invoke("set-system-prompt", text),
   
   invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args)
 } as ElectronAPI)
