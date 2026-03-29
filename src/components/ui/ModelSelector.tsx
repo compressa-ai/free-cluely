@@ -49,6 +49,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
       if (config.isOllama) {
         setSelectedOllamaModel(config.model);
         await loadOllamaModels();
+      } else if (config.provider === "openai") {
+        setOpenaiModel(config.model);
       }
     } catch (error) {
       console.error('Error loading current config:', error);
@@ -239,25 +241,51 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange, onChatOpen
           />
         </div>
       ) : selectedProvider === 'openai' ? (
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-gray-700">OpenAI API Key (optional if already set)</label>
-          <input
-            type="password"
-            placeholder="sk-..."
-            value={openaiApiKey}
-            onChange={(e) => setOpenaiApiKey(e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-white/40 border border-white/60 rounded focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
-          />
-          <label className="text-xs font-medium text-gray-700">Model</label>
-          <select
-            value={openaiModel}
-            onChange={(e) => setOpenaiModel(e.target.value)}
-            className="w-full px-3 py-2 text-xs bg-white/40 border border-white/60 rounded focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
-          >
-            <option value="gpt-4o">gpt-4o</option>
-            <option value="gpt-4o-mini">gpt-4o-mini</option>
-            <option value="gpt-4-turbo">gpt-4-turbo</option>
-          </select>
+        <div className="space-y-3 rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-3">
+          <div>
+            <label className="text-xs font-semibold text-gray-800">OpenAI API key</label>
+            <p className="text-[11px] text-gray-600 mt-0.5 mb-1.5">
+              Paste your secret key from{' '}
+              <a
+                href="https://platform.openai.com/api-keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-700 underline hover:text-emerald-900"
+              >
+                platform.openai.com/api-keys
+              </a>
+              . Leave empty if <code className="text-[10px] bg-white/50 px-1 rounded">OPENAI_API_KEY</code> is already set (e.g. in <code className="text-[10px] bg-white/50 px-1 rounded">.env</code>)—use this field to update the key in the running app.
+            </p>
+            <input
+              type="password"
+              autoComplete="off"
+              placeholder="sk-... (required on first OpenAI setup)"
+              value={openaiApiKey}
+              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              className="w-full px-3 py-2 text-xs bg-white/50 border border-emerald-200/80 rounded focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-700">Model</label>
+            <select
+              value={openaiModel}
+              onChange={(e) => setOpenaiModel(e.target.value)}
+              className="w-full px-3 py-2 text-xs bg-white/50 border border-emerald-200/80 rounded focus:outline-none focus:ring-2 focus:ring-emerald-400/60 mt-1"
+            >
+              <optgroup label="GPT-4.1">
+                <option value="gpt-4.1">gpt-4.1</option>
+                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                <option value="gpt-4.1-nano">gpt-4.1-nano</option>
+              </optgroup>
+              <optgroup label="GPT-4o">
+                <option value="gpt-4o">gpt-4o</option>
+                <option value="gpt-4o-mini">gpt-4o-mini</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="gpt-4-turbo">gpt-4-turbo</option>
+              </optgroup>
+            </select>
+          </div>
         </div>
       ) : (
         <div className="space-y-2">

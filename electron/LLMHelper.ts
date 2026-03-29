@@ -426,10 +426,16 @@ export class LLMHelper {
   public async switchToOpenAI(apiKey?: string, model?: string): Promise<void> {
     if (apiKey) {
       this.openaiClient = new OpenAI({ apiKey })
-      this.openaiModel = model || "gpt-4o"
       this.model = null
     }
-    if (!this.openaiClient && !apiKey) throw new Error("No OpenAI API key provided and no existing client")
+    if (!this.openaiClient) {
+      throw new Error("No OpenAI API key provided and no existing client")
+    }
+    if (model) {
+      this.openaiModel = model
+    } else if (apiKey) {
+      this.openaiModel = "gpt-4o"
+    }
     this.useOllama = false
     this.cloudProvider = "openai"
     console.log("[LLMHelper] Switched to OpenAI")

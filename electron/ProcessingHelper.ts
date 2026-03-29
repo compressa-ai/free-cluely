@@ -1,5 +1,6 @@
 // ProcessingHelper.ts
 
+import { app } from "electron"
 import { AppState } from "./main"
 import { LLMHelper } from "./LLMHelper"
 import { loadPersistedSystemPrompt, persistSystemPrompt } from "./userSettings"
@@ -37,6 +38,12 @@ export class ProcessingHelper {
       } else if (geminiKey) {
         console.log("[ProcessingHelper] Initializing with Gemini")
         this.llmHelper = new LLMHelper(geminiKey, false, undefined, undefined, "gemini")
+      } else if (app.isPackaged) {
+        console.warn(
+          "[ProcessingHelper] No OPENAI_API_KEY / GEMINI_API_KEY in environment; starting in Ollama mode. " +
+            "Install and run Ollama or set a cloud key in Settings (or use .env in dev)."
+        )
+        this.llmHelper = new LLMHelper(undefined, true, ollamaModel, ollamaUrl, "gemini")
       } else {
         throw new Error("Set OPENAI_API_KEY or GEMINI_API_KEY in environment, or enable Ollama with USE_OLLAMA=true")
       }

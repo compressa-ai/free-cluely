@@ -5,9 +5,7 @@ import path from "node:path"
 
 const isDev = process.env.NODE_ENV === "development"
 
-const startUrl = isDev
-  ? "http://localhost:5180"
-  : `file://${path.join(__dirname, "../dist/index.html")}`
+const productionIndexHtml = path.join(__dirname, "../dist/index.html")
 
 export class WindowHelper {
   private mainWindow: BrowserWindow | null = null
@@ -119,9 +117,15 @@ export class WindowHelper {
     this.mainWindow.setSkipTaskbar(true)
     this.mainWindow.setAlwaysOnTop(true)
 
-    this.mainWindow.loadURL(startUrl).catch((err) => {
-      console.error("Failed to load URL:", err)
-    })
+    if (isDev) {
+      this.mainWindow.loadURL("http://localhost:5180").catch((err) => {
+        console.error("Failed to load dev URL:", err)
+      })
+    } else {
+      this.mainWindow.loadFile(productionIndexHtml).catch((err) => {
+        console.error("Failed to load index.html:", productionIndexHtml, err)
+      })
+    }
 
     // Show window after loading URL and center it
     this.mainWindow.once('ready-to-show', () => {
